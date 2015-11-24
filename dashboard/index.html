@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Check-in Dashboard</title>
+    <style>
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            font-weight: 300;
+            color: #0f0f0f;
+            text-align: left;
+            background: #fff url("./bg.png") no-repeat center top;
+        }
+
+        #checkincount {
+            position: absolute;
+            display: block;
+            font-size: 2400%;
+            text-align: center;
+            width: 100%;
+            z-index: 200;
+            top: 0;
+            height: 0;
+        }
+
+        #clock {
+            position: absolute;
+            top: 3%;
+            left: 6%;
+            font-size: 600%;
+            z-index: 200;
+        }
+
+        #nametacker {
+            position: absolute;
+            top: 3%;
+            right: 3%;
+            font-size: 300%;
+            z-index: 200;
+        }
+
+        #nametacker small {
+            font-size: 50%;
+        }
+
+        #chart {
+            width: 100%;
+            height: 400px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+<div id="checkincount">&mdash;</div>
+<div id="clock">00:00</div>
+<div id="nametacker">
+    <small>powered by</small>
+    name<strong>tacker</strong>.com
+</div>
+<div id="chart"></div>
+
+<script src="jquery.min.js"></script>
+<script src="highcharts.js"></script>
+<script>
+    function updateStats() {
+        $.ajax('/stats.json').then(function (data) {
+            $('#checkincount').text(data.stats.checkins.su);
+            updateChart(data);
+        });
+    }
+
+    function updateChart(data) {
+        var chartData = {
+            chart: {
+                backgroundColor: 'transparent'
+            },
+            colors: ['#2b6dc5', '#78cf2f'],
+            legend: {
+                enabled: false
+            },
+            title: {
+                text: ''
+            },
+            xAxis: {
+                categories: []
+            },
+            yAxis: {
+                title: {
+                    text: 'Check-ins'
+                }
+            },
+            series: [{
+                name: 'Sonntag',
+                data: []
+            }, {
+                name: 'Check-ins Sonntag',
+                type: 'column',
+                data: []
+            }]
+        };
+
+        var labelindex = [];
+        var n = 0;
+
+        for (var h = 0; h < 8; h++) {
+            for (var m = 0; m < 6; m++) {
+                var slot = (h + 8) + ":" + (m == 0 ? "00" : (m * 10));
+                labelindex[slot.replace(":", "")] = n;
+                n++;
+                chartData.xAxis.categories.push(slot);
+            }
+        }
+        labelindex["1600"] = n;
+        chartData.xAxis.categories.push('16:00');
+
+        chartData.series[0].data[0] = 0;
+        chartData.series[1].data[0] = 0;
+
+        var sum = 0;
+        for (var slot in data.stats.checkins.su_hour) {
+            var v = data.stats.checkins.su_hour[slot];
+            sum += v;
+            chartData.series[0].data[labelindex[slot]] = sum;
+            chartData.series[1].data[labelindex[slot]] = v;
+        }
+        
+        $('#chart').highcharts(chartData);
+    }
+
+    $(function ($) {
+        window.setInterval(updateStats, 10 * 1000);
+        window.setInterval(function () {
+            var now = new Date();
+            $('#clock').text(now.toTimeString().substr(0, 5));
+        }, 1000);
+        updateStats();
+
+        $('#chart').height($(window).height());
+        $('#checkincount').height($(window).height());
+        $('#checkincount').css({'line-height': $(window).height() + 'px'});
+    });
+</script>
+</body>
+</html>

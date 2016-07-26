@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Markus Tacker <m@cto.hiv>",
+  "author": "Markus Tacker <m@coderbyheart.com>",
   "license": "MIT",
   "dependencies": {
     "angular": "^1.4.8",
